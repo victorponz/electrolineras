@@ -35,34 +35,16 @@
 <div id="map" style="width: 600px; height: 400px;"></div>
 <script>
 
-    const map = L.map('map').setView([51.505, -0.09], 13);
-
+    const map = L.map('map').setView([40.002372, -0.016479], 9);
+    map.on("moveend", function (e){
+        loadElectrolineras();
+    })
     const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map);
 
-    const marker = L.marker([51.5, -0.09]).addTo(map)
-        .bindPopup('<b>Hello world!</b><br />I am a popup.').openPopup();
-
-    const circle = L.circle([51.508, -0.11], {
-        color: 'red',
-        fillColor: '#f03',
-        fillOpacity: 0.5,
-        radius: 500
-    }).addTo(map).bindPopup('I am a circle.');
-
-    const polygon = L.polygon([
-        [51.509, -0.08],
-        [51.503, -0.06],
-        [51.51, -0.047]
-    ]).addTo(map).bindPopup('I am a polygon.');
-
-
-    const popup = L.popup()
-        .setLatLng([51.513, -0.09])
-        .setContent('I am a standalone popup.')
-        .openOn(map);
+    const popup = L.popup();
 
     loadElectrolineras();
     function onMapClick(e) {
@@ -72,22 +54,29 @@
             .openOn(map);
     }
 
-    map.on('click', onMapClick);
+    //map.on('click', onMapClick);
 
     function loadElectrolineras(){
         // URL of the external JSON API
-        const url = '/electrolineras';
-
         // Fetch the JSON
-        fetch('/electrolineras')
+        fetch(`/electrolineras?lat=${map.getCenter().lat}&lng=${map.getCenter().lng}`)
             .then(response => response.json())
             .then(data => drawMarkers(data))
             .catch(err => console.error('Fetch error:', err));
     }
+    function onMarkerClick(e) {
+        console.log(this.options.alt);
+        popup
+            .setLatLng(e.latlng)
+            .setContent(this.options.alt)
+            .openOn(map);
+    }
     function drawMarkers(data){
         data.results.forEach(item => {
-            console.log(item.municipios, item.coordenadas.lat, item.coordenadas.lon);
-            L.marker([item.coordenadas.lat, item.coordenadas.lon]).addTo(map)
+            //console.log(item.municipios, item.coordenadas.lat, item.coordenadas.lon);
+            L.marker([item.coordenadas.lat, item.coordenadas.lon], {alt: item.municipios})
+                .addTo(map)
+                .on("click", onMarkerClick);
         });
     }
 </script>
